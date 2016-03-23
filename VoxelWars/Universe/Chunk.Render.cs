@@ -25,6 +25,7 @@ namespace VoxelWars.Universe
 			slices.Add(builder.BuildThreshold(Block.Dirt, Blocks.Dirt));
 			slices.Add(builder.BuildThreshold(Block.Grass, Blocks.Grass));
 			slices.Add(builder.BuildThreshold(Block.Sand, Blocks.Sand));
+			slices.Add(builder.BuildThreshold(Block.Water, Blocks.Water));
             
 			hasData = builder.Bind(verticies, indicies);
 		}

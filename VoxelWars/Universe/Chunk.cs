@@ -9,10 +9,16 @@ namespace VoxelWars.Universe
 		public readonly int Metadata;
 		public readonly Block Block;
 		
-		public BlockData(Block block, int metadata = 0)
+		public BlockData(Block block, int metadata)
 		{
 			Block = block;
 			Metadata = metadata;
+		}
+		
+		public BlockData(Block block)
+		{
+			Block = block;
+			Metadata = block.DefaultMetadata;
 		}
 	}
 

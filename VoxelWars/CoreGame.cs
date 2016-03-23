@@ -152,15 +152,12 @@ namespace VoxelWars
 		protected override void OnRenderFrame(FrameEventArgs e)
 		{
 			float current = (float)(1 / e.Time);
-			if (Math.Abs(current - fps) > 10)
-			{
-				Console.WriteLine("High FPS: " + current + " => " + fps);
-				fps = current;
-			}
-			else
-			{
-				fps = fps * 0.9f + current * 0.1f;
-			}
+//			if (Math.Abs(current - fps) > 10)
+//			{
+//				Console.WriteLine("High FPS change " + current + " => " + fps);
+//			}
+			
+			fps = fps * 0.9f + current * 0.1f;
 			
 			Title = "Core Game: " + Math.Round(fps) + "fps";
 			

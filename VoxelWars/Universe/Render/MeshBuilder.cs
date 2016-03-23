@@ -28,6 +28,57 @@ namespace VoxelWars.Universe.Render
 		}
 	}
 	
+	public struct Vector
+	{
+		public readonly Vector2 Vector;
+		public readonly int Metadata;
+		
+		public Vertex(float x, float y, int metadata)
+		{
+			Vector = new Vector2(x, y);
+			Metadata = metadata;
+		}
+		
+		public Vertex(Vector2 pos, int metadata)
+		{
+			Vector = pos;
+			Metadata = metadata;
+		}
+		
+		
+		public override bool Equals(object obj)
+		{
+			return (obj is Vertex) && Equals((Vector)obj);
+		}
+		
+		public bool Equals(Vertex other)
+		{
+			return this.Vector == other.Vector && this.Metadata == other.Metadata;
+		}
+		
+		public override int GetHashCode()
+		{
+			int hashCode = 0;
+			unchecked
+			{
+				hashCode += 1000000007 * Vector.GetHashCode();
+				hashCode += 1000000009 * Metadata.GetHashCode();
+			}
+			return hashCode;
+		}
+		
+		public static bool operator ==(Vertex lhs, Vertex rhs)
+		{
+			return lhs.Equals(rhs);
+		}
+		
+		public static bool operator !=(Vertex lhs, Vertex rhs)
+		{
+			return !(lhs == rhs);
+		}
+
+	}
+	
 	/// <summary>
 	/// Used to build a set of meshes
 	/// </summary>
