@@ -15,6 +15,7 @@ namespace VoxelWars.Loaders
 		// public readonly IReadOnlyDictionary<string, string> Textures;
 		public bool Timer = false;
 		public bool Offset = false;
+		public bool Metadata = false;
 		public Vector3 Color;
 
 		public IReadOnlyList<EnableCap> Enabled = new List<EnableCap>();

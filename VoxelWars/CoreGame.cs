@@ -85,6 +85,8 @@ namespace VoxelWars
 					if (x * x + y * y <= half) world.SetBlock(new Position(xPos + x, yPos + y), new BlockData(block));
 				}
 			}
+			
+			world.MoveNext();
 		}
 
 		protected override void OnMouseMove(MouseMoveEventArgs e)
@@ -145,6 +147,12 @@ namespace VoxelWars
 				Matrix4 projection = Matrix4.CreateOrthographicOffCenter(-Width / 2, Width / 2, -Height / 2, Height / 2, -1, 4);
 				return view * projection;
 			}
+		}
+		
+		protected override void OnKeyDown(KeyboardKeyEventArgs e)
+		{
+			base.OnKeyDown(e);
+			if (e.Key == Key.Space) world.UpdateChunks();
 		}
 
 		private float fps = 60;

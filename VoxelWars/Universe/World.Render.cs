@@ -46,13 +46,20 @@ namespace VoxelWars.Universe
 		}
 
 		private float timer = 0;
+		
+		public void UpdateChunks()
+		{
+			foreach (Chunk chunk in chunks.Values) chunk.Update();
+			foreach (Chunk chunk in chunks.Values) chunk.MoveNext();
+		}
+		
+		public void MoveNext()
+		{
+			foreach (Chunk chunk in chunks.Values) chunk.MoveNext();
+		}
 
 		public void Render(Matrix4 view, Position position)
 		{
-			// Yep. It is horrible
-			foreach (Chunk chunk in chunks.Values) chunk.Update();
-			foreach (Chunk chunk in chunks.Values) chunk.MoveNext();
-
 			timer += 0.001f;
 			foreach (Position offsetPos in Offsets)
 			{

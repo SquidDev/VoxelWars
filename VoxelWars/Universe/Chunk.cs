@@ -6,10 +6,10 @@ namespace VoxelWars.Universe
 	{
 		public static readonly BlockData Air = new BlockData(Block.Air);
 		
-		public readonly int Metadata;
+		public readonly float Metadata;
 		public readonly Block Block;
 		
-		public BlockData(Block block, int metadata)
+		public BlockData(Block block, float metadata)
 		{
 			Block = block;
 			Metadata = metadata;

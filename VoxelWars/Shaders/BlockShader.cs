@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using VoxelWars.Loaders;
+using VoxelWars.Universe.Render;
 
 namespace VoxelWars.Shaders
 {
@@ -39,8 +40,9 @@ namespace VoxelWars.Shaders
 				new ShaderData()
 				{
 					Color = new Vector3(0.0f, 0.0f, 1.0f),
-					Fragment = "block", Vertex = "block",
+					Fragment = "block", Vertex = "water",
 					// Timer = true, Offset = true,
+					Metadata = true,
 				}
 			);
 	}
@@ -62,6 +64,7 @@ namespace VoxelWars.Shaders
 		public readonly ShaderUniform Timer;
 		public readonly ShaderUniform Color;
 		public readonly ShaderUniform Offset;
+		public readonly ShaderAttribute Metadata;
 
 		public readonly IReadOnlyList<EnableCap> Enabled;
 		public readonly IReadOnlyList<EnableCap> Disabled;
@@ -79,6 +82,7 @@ namespace VoxelWars.Shaders
 				MVP = GetUniform("mvp");
 				if (data.Timer) Timer = GetUniform("timer");
 				if (data.Offset) Offset = GetUniform("offset");
+				if (data.Metadata) Metadata = GetAttribute("metadata");
                 
 				Color = GetUniform("color");
 				color = data.Color;
@@ -127,7 +131,8 @@ namespace VoxelWars.Shaders
 
 		public void Draw(int start, int length)
 		{
-			GL.VertexAttribPointer(Coord.Id, 2, VertexAttribPointerType.Float, false, 0, 0);
+			GL.VertexAttribPointer(Coord.Id, 2, VertexAttribPointerType.Float, false, Marshal.SizeOf<Vertex>(), 0);
+			if (Metadata != null) GL.VertexAttribPointer(Metadata.Id, 1, VertexAttribPointerType.Float, false, Marshal.SizeOf<Vertex>(), Marshal.SizeOf<Vector2>());
 			GL.DrawElements(PrimitiveType.Triangles, length, DrawElementsType.UnsignedShort, start);
 		}
 	}

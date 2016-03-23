@@ -42,7 +42,7 @@ namespace VoxelWars.Universe
 		public static readonly Block Dirt = new BasicBlock(BlockType.Solid, 1);
 		public static readonly Block Grass = new BasicBlock(BlockType.Solid, 2);
 		public static readonly Block Sand = new FallingSand(BlockType.Solid, 3);
-		public static readonly Block Water = new WaterBlock(20, 0);
+		public static readonly Block Water = new WaterBlock(0);
 		
 		public static readonly Block[] Blocks = new Block[] { Dirt, Grass, Sand, Water };
 
@@ -58,7 +58,7 @@ namespace VoxelWars.Universe
 		/// </summary>
 		public abstract BlockType Type { get; }
 		
-		public virtual int DefaultMetadata { get { return 0; } }
+		public virtual float DefaultMetadata { get { return 0; } }
 
 		/// <summary>
 		/// If this block requires an update tick
@@ -114,41 +114,43 @@ namespace VoxelWars.Universe
 		/// <summary>
 		/// Default mass of a block of water
 		/// </summary>
-		public readonly int MaxMass = 1000;
+		public readonly float MaxMass = 1;
 		
 		/// <summary>
 		/// Maximum amount to compress by
 		/// </summary>
-		public readonly int MaxCompress;
+		public readonly float MaxCompress = 0.02f;
 		
 		/// <summary>
 		/// Minimum mass before it is considered dry
 		/// </summary>
-		public readonly int MinMass = 0;
+		public readonly float MinMass = 0.0001f;
 		
 		/// <summary>
 		/// Minimum flow per tick
 		/// </summary>
-		public readonly int MinFlow = 10;
+		public readonly float MinFlow = 0.01f;
 		
 		/// <summary>
 		/// Maximum flow per tick
 		/// </summary>
-		public readonly int MaxFlow = 1000;
+		public readonly float MaxFlow = 1;
 		
-		public WaterBlock(int waterDelta, int density)
+		public WaterBlock(int density)
 			: base(BlockType.Fluid, density)
 		{
-			MaxCompress = waterDelta;
 		}
 		
 		public override bool RequiresUpdate { get { return true; } }
 		
-		public override int DefaultMetadata { get { return MaxMass; } }
+		public override float DefaultMetadata { get { return MaxMass; } }
 		
 		public override void Update(Chunk chunk, Byte2 position)
 		{
-			int remaining = Handle(chunk, position);
+			float original = chunk.CurrentAccessor[position].Metadata;
+			float remaining = Handle(chunk, position);
+			
+			Console.WriteLine(position + " " + original + " => " + remaining);
 			if (remaining <= MinMass)
 			{
 				chunk.NextAccessor[position] = BlockData.Air;
@@ -159,22 +161,22 @@ namespace VoxelWars.Universe
 			}
 		}
 		
-		public int Handle(Chunk chunk, Byte2 position)
+		public float Handle(Chunk chunk, Byte2 position)
 		{
 			ChunkAccessor current = chunk.CurrentAccessor;
 			ChunkSetter next = chunk.NextAccessor;
 			
 			int x = position.X, y = position.Y;
 			
-			int remaining = current[position.X, position.Y].Metadata;
-			int original = remaining;
+			float remaining = current[position.X, position.Y].Metadata;
+			float original = remaining;
 			if (remaining <= MinMass) return remaining;
 			
 			//The block below this one
 			BlockData data = current[x, y - 1];
 			if (data.Block.Type != BlockType.Solid)
 			{
-				int flow = GetStableMass(remaining + data.Metadata) - data.Metadata;
+				float flow = GetStableMass(remaining + data.Metadata) - data.Metadata;
 				if (flow > MinFlow) flow /= 2; //leads to smoother flow
 				flow = MathHelper.Clamp(flow, 0, Math.Min(MaxFlow, remaining));
 
@@ -189,11 +191,11 @@ namespace VoxelWars.Universe
 			if (data.Block.Type != BlockType.Solid)
 			{
 				//Equalize the amount of water in this block and it's neighbour
-				int flow = (original - data.Metadata) / 4;
+				float flow = (original - data.Metadata) / 4;
 				if (flow > MinFlow) flow /= 2;
 				flow = MathHelper.Clamp(flow, 0, remaining);
 
-				next[x - 1, y] = new BlockData(this, next[x - 1, y].Metadata - flow);
+				next[x - 1, y] = new BlockData(this, next[x - 1, y].Metadata + flow);
 				remaining -= flow;
 			}
 			
@@ -202,11 +204,11 @@ namespace VoxelWars.Universe
 			if (data.Block.Type != BlockType.Solid)
 			{
 				//Equalize the amount of water in this block and it's neighbour
-				int flow = (original - data.Metadata) / 4;
+				float flow = (original - data.Metadata) / 4;
 				if (flow > MinFlow) flow /= 2;
 				flow = MathHelper.Clamp(flow, 0, remaining);
 
-				next[x + 1, y] = new BlockData(this, next[x + 1, y].Metadata - flow);
+				next[x + 1, y] = new BlockData(this, next[x + 1, y].Metadata + flow);
 				remaining -= flow;
 			}
 			
@@ -214,7 +216,7 @@ namespace VoxelWars.Universe
 			data = current[x, y + 1];
 			if (data.Block.Type != BlockType.Solid)
 			{
-				int flow = remaining - GetStableMass(remaining + data.Metadata);
+				float flow = remaining - GetStableMass(remaining + data.Metadata);
 				if (flow > MinFlow) flow /= 2; //leads to smoother flow
 				flow = MathHelper.Clamp(flow, 0, Math.Min(MaxFlow, remaining));
 
@@ -227,7 +229,7 @@ namespace VoxelWars.Universe
 			return remaining;
 		}
 		
-		private int GetStableMass(int totalMass)
+		private float GetStableMass(float totalMass)
 		{
 			if (totalMass <= MaxMass)
 			{
