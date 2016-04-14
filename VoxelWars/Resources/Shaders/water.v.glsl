@@ -13,7 +13,7 @@ varying vec3 frag_color;
 #define WAVE_LENGTH 7.0
 
 void main(void) {
-/*
+	/*
 	frag_color = color;
 
 	vec2 pos = coord;
@@ -22,11 +22,8 @@ void main(void) {
 	float posYbuf = ((pos.x + offset.x) / WAVE_LENGTH + timer * WAVE_SPEED * WAVE_LENGTH);
 
 	pos.y -= sin(posYbuf) *  WAVE_HEIGHT + sin(posYbuf / 7.0) * WAVE_HEIGHT;
+	*/
 
-	gl_Position = mvp * vec4(pos, 0, 1);
-*/
-
-	frag_color = color * (1 - (metadata / 1000));
+	frag_color = color * (1 - metadata / 2);
 	gl_Position = mvp * vec4(coord, 0, 1);
-
 }

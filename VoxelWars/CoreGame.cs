@@ -77,7 +77,6 @@ namespace VoxelWars
 				half = 2;
 			}
 
-
 			for (int x = -zoom / 2; x <= zoom / 2; x++)
 			{
 				for (int y = -zoom / 2; y <= zoom / 2; y++)
@@ -137,6 +136,7 @@ namespace VoxelWars
 
 			Position pos = new Position((int)position.X, (int)position.Y) / Chunk.ChunkSize;
 			world.Update(pos);
+			world.UpdateChunks();
 		}
 		
 		public Matrix4 Matrix
@@ -147,12 +147,6 @@ namespace VoxelWars
 				Matrix4 projection = Matrix4.CreateOrthographicOffCenter(-Width / 2, Width / 2, -Height / 2, Height / 2, -1, 4);
 				return view * projection;
 			}
-		}
-		
-		protected override void OnKeyDown(KeyboardKeyEventArgs e)
-		{
-			base.OnKeyDown(e);
-			if (e.Key == Key.Space) world.UpdateChunks();
 		}
 
 		private float fps = 60;

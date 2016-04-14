@@ -69,6 +69,11 @@ namespace VoxelWars.Universe
 		{
 			Debug.Assert(RequiresUpdate, "Cannot update non-updateable tile");
 		}
+		
+		public virtual Block Create(float metadata)
+		{
+			return this;
+		}
 	}
 
 	public class BasicBlock : Block
@@ -98,7 +103,7 @@ namespace VoxelWars.Universe
 
 		public override void Update(Chunk chunk, Byte2 position)
 		{
-			if (chunk.CurrentAccessor[position.X, position.Y - 1].Block.Type == BlockType.Air)
+			if (chunk.CurrentAccessor[position.X, position.Y - 1].Block.Type != BlockType.Solid)
 			{
 				chunk.NextAccessor[position.X, position.Y - 1] = chunk.CurrentAccessor[position.X, position.Y];
 				chunk.NextAccessor[position.X, position.Y] = BlockData.Air;
@@ -119,7 +124,7 @@ namespace VoxelWars.Universe
 		/// <summary>
 		/// Maximum amount to compress by
 		/// </summary>
-		public readonly float MaxCompress = 0.02f;
+		public readonly float MaxCompress = 0.2f;
 		
 		/// <summary>
 		/// Minimum mass before it is considered dry
@@ -136,6 +141,11 @@ namespace VoxelWars.Universe
 		/// </summary>
 		public readonly float MaxFlow = 1;
 		
+		/// <summary>
+		/// Factor of calculated flow: results in a smoother flow
+		/// </summary>
+		public readonly float FlowFactor = 0.8f;
+		
 		public WaterBlock(int density)
 			: base(BlockType.Fluid, density)
 		{
@@ -148,16 +158,15 @@ namespace VoxelWars.Universe
 		public override void Update(Chunk chunk, Byte2 position)
 		{
 			float original = chunk.CurrentAccessor[position].Metadata;
-			float remaining = Handle(chunk, position);
+			float after = Handle(chunk, position);
 			
-			Console.WriteLine(position + " " + original + " => " + remaining);
-			if (remaining <= MinMass)
+			if (after <= MinMass)
 			{
 				chunk.NextAccessor[position] = BlockData.Air;
 			}
 			else
 			{
-				chunk.NextAccessor[position] = new BlockData(this, remaining);
+				chunk.NextAccessor[position] = new BlockData(this, after);
 			}
 		}
 		
@@ -169,22 +178,25 @@ namespace VoxelWars.Universe
 			int x = position.X, y = position.Y;
 			
 			float remaining = current[position.X, position.Y].Metadata;
+			float after = next[position.X, position.Y].Metadata;
 			float original = remaining;
-			if (remaining <= MinMass) return remaining;
+			if (remaining <= MinMass) return after;
+			BlockData data;
 			
 			//The block below this one
-			BlockData data = current[x, y - 1];
+			data = current[x, y - 1];
 			if (data.Block.Type != BlockType.Solid)
 			{
 				float flow = GetStableMass(remaining + data.Metadata) - data.Metadata;
-				if (flow > MinFlow) flow /= 2; //leads to smoother flow
+				if (flow > MinFlow) flow *= FlowFactor;
 				flow = MathHelper.Clamp(flow, 0, Math.Min(MaxFlow, remaining));
-
+				
 				next[x, y - 1] = new BlockData(this, next[x, y - 1].Metadata + flow);
+				after -= flow;
 				remaining -= flow;
 			}
 			
-			if (remaining <= MinMass) return remaining;
+			if (remaining <= MinMass) return after;
 			
 			// To the left
 			data = current[x - 1, y];
@@ -192,12 +204,15 @@ namespace VoxelWars.Universe
 			{
 				//Equalize the amount of water in this block and it's neighbour
 				float flow = (original - data.Metadata) / 4;
-				if (flow > MinFlow) flow /= 2;
+				if (flow > MinFlow) flow *= FlowFactor;
 				flow = MathHelper.Clamp(flow, 0, remaining);
 
 				next[x - 1, y] = new BlockData(this, next[x - 1, y].Metadata + flow);
+				after -= flow;
 				remaining -= flow;
 			}
+			
+			if (remaining <= MinMass) return after;
 			
 			// To the right
 			data = current[x + 1, y];
@@ -205,28 +220,32 @@ namespace VoxelWars.Universe
 			{
 				//Equalize the amount of water in this block and it's neighbour
 				float flow = (original - data.Metadata) / 4;
-				if (flow > MinFlow) flow /= 2;
+				if (flow > MinFlow) flow *= FlowFactor;
 				flow = MathHelper.Clamp(flow, 0, remaining);
 
 				next[x + 1, y] = new BlockData(this, next[x + 1, y].Metadata + flow);
+				after -= flow;
 				remaining -= flow;
 			}
+			
+			if (remaining <= MinMass) return after;
 			
 			// Above
 			data = current[x, y + 1];
 			if (data.Block.Type != BlockType.Solid)
 			{
 				float flow = remaining - GetStableMass(remaining + data.Metadata);
-				if (flow > MinFlow) flow /= 2; //leads to smoother flow
+				if (flow > MinFlow) flow *= FlowFactor; //leads to smoother flow
 				flow = MathHelper.Clamp(flow, 0, Math.Min(MaxFlow, remaining));
 
 				next[x, y + 1] = new BlockData(this, next[x, y + 1].Metadata + flow);
+				after -= flow;
 				remaining -= flow;
 			}
 			
-			if (remaining <= MinMass) return remaining;
+			if (remaining <= MinMass) return after;
 			
-			return remaining;
+			return after;
 		}
 		
 		private float GetStableMass(float totalMass)
@@ -243,6 +262,11 @@ namespace VoxelWars.Universe
 			{
 				return (totalMass + MaxCompress) / 2;
 			}
+		}
+		
+		public override Block Create(float metadata)
+		{
+			return metadata <= MinMass ? Block.Air : base.Create(metadata);
 		}
 	}
 }

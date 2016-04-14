@@ -9,6 +9,7 @@ namespace VoxelWars.Universe
 	public class ChunkAccessor
 	{
 		protected readonly BlockData[,] Blocks = new BlockData[Chunk.ChunkSize, Chunk.ChunkSize];
+		internal bool next = false;
 		internal readonly HashSet<Byte2> Updates = new HashSet<Byte2>();
 		protected readonly Chunk Chunk;
 
@@ -41,49 +42,17 @@ namespace VoxelWars.Universe
 			{
 				Chunk chunk;
 				Byte2 position;
-				return TryGetPosition(x, y, out chunk, out position) ? chunk.CurrentAccessor[position] : BlockData.Air;
+				return Chunk.TryGetPosition(x, y, out chunk, out position) 
+					? (next ? chunk.NextAccessor : chunk.CurrentAccessor)[position] 
+					: BlockData.Air;
 			}
-		}
-
-		public bool TryGetPosition(int x, int y, out Chunk chunk, out Byte2 blockPos)
-		{
-			chunk = null;
-			blockPos = new Byte2();
-
-			if (x < 0)
-			{
-				Chunk n = this.Chunk.neighbours[(byte)Side.West];
-				return n != null && n.CurrentAccessor.TryGetPosition(x + Chunk.ChunkSize, y, out chunk, out blockPos);
-			}
-
-			if (y < 0)
-			{
-				Chunk n = this.Chunk.neighbours[(byte)Side.South];
-				return n != null && n.CurrentAccessor.TryGetPosition(x, y + Chunk.ChunkSize, out chunk, out blockPos);
-			}
-
-			if (x >= Chunk.ChunkSize)
-			{
-				Chunk n = this.Chunk.neighbours[(byte)Side.East];
-				return n != null && n.CurrentAccessor.TryGetPosition(x - Chunk.ChunkSize, y, out chunk, out blockPos);
-			}
-
-			if (y >= Chunk.ChunkSize)
-			{
-				Chunk n = this.Chunk.neighbours[(byte)Side.North];
-				return n != null && n.CurrentAccessor.TryGetPosition(x, y - Chunk.ChunkSize, out chunk, out blockPos);
-			}
-
-			chunk = this.Chunk;
-			blockPos = new Byte2(x, y);
-			return true;
 		}
 
 		public bool TryGetBlock(int x, int y, out BlockData block, out Chunk chunk, out Byte2 position)
 		{
-			if (TryGetPosition(x, y, out chunk, out position))
+			if (Chunk.TryGetPosition(x, y, out chunk, out position))
 			{
-				block = chunk.CurrentAccessor[position.X, position.Y];
+				block = (next ? chunk.NextAccessor : chunk.CurrentAccessor)[position.X, position.Y];
 				return true;
 			}
 			else
@@ -161,7 +130,7 @@ namespace VoxelWars.Universe
 			{
 				Chunk chunk;
 				Byte2 position;
-				if (TryGetPosition(x, y, out chunk, out position))
+				if (Chunk.TryGetPosition(x, y, out chunk, out position))
 				{
 					chunk.NextAccessor[position] = value;
 				}
